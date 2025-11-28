@@ -1,0 +1,24 @@
+[package]
+name = "image-upload"
+authors = ["Daniel Kuschel <danielkaes@duck.com>"]
+description = ""
+version = "0.1.0"
+rust-version = "1.78"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow = "1"
+spin-sdk = "3.1.0"
+uuid = { version = "1.10.0", features = ["v4"] }
+sha2 = "0.10.8"
+hex = "0.4.3"
+bytes = "1"
+base64 = "0.22.1"
+multipart = "0.18"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[workspace]

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glinder</title>
+    <link rel="stylesheet" href="card.css">
+</head>
+<body>
+    <header class="app-header">
+        <img src="logo.png" alt="Glinder" class="logo">
+        <div class="header-texts">
+            <h1 class="logo-text">Glinder</h1>
+            <p class="subheader">Where lonely gloves get a second hand</p>
+        </div>
+    </header>
+    <div class="card-container">
+        <div id="card" class="card">
+            <div class="loading">Loading...</div>
+        </div>
+        <div class="controls">
+            <button class="btn btn-nope" onclick="swipe('left')">✖</button>
+            <button class="btn btn-like" onclick="swipe('right')">♥</button>
+        </div>
+    </div>
+
+    <script src="card.js"></script>
+</body>
+</html>
