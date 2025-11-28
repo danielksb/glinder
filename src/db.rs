@@ -80,6 +80,28 @@ pub fn get_image_metadata(conn: &Connection, id: &str) -> Result<Option<ImageMet
     row_to_metadata(result)
 }
 
+pub fn delete_image(conn: &Connection, id: &str) -> Result<bool> {
+    // Check if the image exists first
+    let result = conn.execute(
+        "SELECT id FROM images WHERE id = ?",
+        &[Value::Text(id.to_string())],
+    )?;
+
+    let mut rows = result.rows();
+    if rows.next().is_none() {
+        // Nothing to delete
+        return Ok(false);
+    }
+
+    // Perform the delete
+    let _ = conn.execute(
+        "DELETE FROM images WHERE id = ?",
+        &[Value::Text(id.to_string())],
+    )?;
+
+    Ok(true)
+}
+
 fn row_to_metadata(result: spin_sdk::sqlite::QueryResult) -> Result<Option<ImageMetadata>> {
     let mut rows = result.rows();
     if let Some(row) = rows.next() {

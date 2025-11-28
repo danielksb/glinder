@@ -50,7 +50,7 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    window.location.href = '/api/image/' + data.id;
+                    window.location.href = '/?id=' + data.id;
                 } else {
                     const text = await response.text();
                     showError('Upload failed: ' + text);

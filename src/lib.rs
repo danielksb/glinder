@@ -27,6 +27,18 @@ fn handle_request(req: Request) -> anyhow::Result<impl IntoResponse> {
 
     match (method, path) {
         (Method::Post, "/api/images") => upload_image(req, conn),
+        (Method::Delete, p) if p.starts_with("/api/image/") => {
+            // Delete an image by id - requires Basic auth (same protection as upload UI)
+            if !auth::check_basic_auth(&req)? {
+                return Ok(Response::builder()
+                    .status(401)
+                    .header("WWW-Authenticate", "Basic realm=\"Image Upload\"")
+                    .body(Bytes::from("Unauthorized"))
+                    .build());
+            }
+            let id = p.trim_start_matches("/api/image/");
+            delete_image(id, conn)
+        },
         (Method::Get, p) if p.starts_with("/api/image/") => {
             let id = p.trim_start_matches("/api/image/");
             get_image(id, conn)
@@ -122,6 +134,20 @@ fn get_image(id: &str, conn: Connection) -> anyhow::Result<Response> {
             .header("content-type", mime_type)
             .header("etag", hash)
             .body(Bytes::from(image))
+            .build())
+    } else {
+        Ok(Response::builder()
+            .status(404)
+            .body(Bytes::from("Image not found"))
+            .build())
+    }
+}
+
+fn delete_image(id: &str, conn: Connection) -> anyhow::Result<Response> {
+    if db::delete_image(&conn, id)? {
+        Ok(Response::builder()
+            .status(204)
+            .body(Bytes::from(""))
             .build())
     } else {
         Ok(Response::builder()

@@ -24,8 +24,18 @@ spin build
 
 3. Start the Spin application locally.
 
-```shell
+```powershell
 $env:SPIN_VARIABLE_USERNAME = 'admin'; $env:SPIN_VARIABLE_PASSWORD = 'secret'; spin up
 ```
 
+```bash
+SPIN_VARIABLE_USERNAME="admin" SPIN_VARIABLE_PASSWORD="secret" spin up
+```
+
 After `spin up`, the app will be available at http://127.0.0.1:3000/.
+
+4. Deleting a profile
+
+```bash
+curl -v -X DELETE -H "Authorization: Basic $(echo -n 'admin:secret' | base64)" http://127.0.0.1:3000/api/image/<id>
+```
