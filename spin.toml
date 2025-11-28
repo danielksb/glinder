@@ -29,8 +29,6 @@ password = "{{ password }}"
 command = "cargo build --target wasm32-wasip1 --release"
 watch = ["src/**/*.rs", "Cargo.toml"]
 
-# $env:SPIN_VARIABLE_USERNAME="admin"; $env:SPIN_VARIABLE_PASSWORD="secret"; spin up
-
 [[trigger.http]]
 route = "/..."
 component = "glinder"

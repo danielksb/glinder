@@ -47,13 +47,23 @@ function updateCard(data, replace = false) {
     card.style.transform = '';
     card.style.opacity = '1';
     
+    // Build safe DOM nodes instead of injecting raw HTML to avoid XSS
     card.innerHTML = `
-        <img src="${data.url}" class="card-image" alt="Profile Picture" draggable="false">
+        <img class="card-image" alt="Profile Picture" draggable="false">
         <div class="card-content">
-            <div class="card-title">${data.name}</div>
-            <div class="card-text">${data.description}</div>
+            <div class="card-title"></div>
+            <div class="card-text"></div>
         </div>
     `;
+
+    // Populate fields using textContent to keep user content safe and CSS pre-wrap to preserve newlines
+    const imgEl = card.querySelector('.card-image');
+    const titleEl = card.querySelector('.card-title');
+    const textEl = card.querySelector('.card-text');
+
+    if (imgEl) imgEl.setAttribute('src', data.url);
+    if (titleEl) titleEl.textContent = data.name || '';
+    if (textEl) textEl.textContent = data.description || '';
 }
 
 window.addEventListener('popstate', () => {
