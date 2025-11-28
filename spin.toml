@@ -1,10 +1,10 @@
 spin_manifest_version = 2
 
 [application]
-name = "image-upload"
+name = "glinder"
 version = "0.1.0"
 authors = ["Daniel Kuschel <danielkaes@duck.com>"]
-description = ""
+description = "A dating app for lonely gloves."
 
 [variables]
 username = { required = true }
