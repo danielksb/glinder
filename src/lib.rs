@@ -2,7 +2,8 @@ mod db;
 mod models;
 mod auth;
 
-use spin_sdk::http::{IntoResponse, Request, Response, Method};
+use spin_sdk::http::responses::not_found;
+use spin_sdk::http::{Params, Request, Response, Router};
 use spin_sdk::http_component;
 use spin_sdk::sqlite::Connection;
 use uuid::Uuid;
@@ -13,59 +14,30 @@ use std::io::Read;
 use models::UploadResponse;
 
 #[http_component]
-fn handle_request(req: Request) -> anyhow::Result<impl IntoResponse> {
-    let uri = req.uri().to_string();
-    let method = req.method().clone();
-    
-    let path = uri.find("://")
-        .map(|i| uri[i + 3..].find('/').map(|j| &uri[i + 3 + j..]).unwrap_or("/"))
-        .unwrap_or(&uri);
-    let path = path.split('?').next().unwrap_or(path);
-    
-    let conn = Connection::open_default()?;
-    db::init(&conn)?;
-
-    match (method, path) {
-        (Method::Post, "/api/images") => upload_image(req, conn),
-        (Method::Delete, p) if p.starts_with("/api/image/") => {
-            // Delete an image by id - requires Basic auth (same protection as upload UI)
-            if !auth::check_basic_auth(&req)? {
-                return Ok(Response::builder()
-                    .status(401)
-                    .header("WWW-Authenticate", "Basic realm=\"Image Upload\"")
-                    .body(Bytes::from("Unauthorized"))
-                    .build());
-            }
-            let id = p.trim_start_matches("/api/image/");
-            delete_image(id, conn)
-        },
-        (Method::Get, p) if p.starts_with("/api/image/") => {
-            let id = p.trim_start_matches("/api/image/");
-            get_image(id, conn)
-        },
-        (Method::Get, p) if p.starts_with("/api/meta/") => {
-            let id = p.trim_start_matches("/api/meta/");
-            get_image_metadata(id, conn)
-        },
-        (Method::Get, "/upload.html") => {
-            if !auth::check_basic_auth(&req)? {
-                return Ok(Response::builder()
-                    .status(401)
-                    .header("WWW-Authenticate", "Basic realm=\"Image Upload\"")
-                    .body(Bytes::from("Unauthorized"))
-                    .build());
-            }
-            serve_upload_page()
-        },
-        (Method::Get, "/api/next") => get_next_image(conn),
-        _ => Ok(Response::builder()
-            .status(404)
-            .body(Bytes::from("Not Found"))
-            .build()),
-    }
+fn handle_request(req: Request) -> Response {
+    let mut router = Router::new();
+    router.post("/api/images", upload_image);
+    router.delete("/api/images", delete_image);
+    router.get("/api/image/:id", get_image);
+    router.get("/api/meta/:id", get_image_metadata);
+    router.get("/upload.html", serve_upload_page);
+    router.get("/api/next", get_next_image);
+    router.any("/*", handle_not_found);
+    router.handle(req)
 }
 
-fn serve_upload_page() -> anyhow::Result<Response> {
+fn handle_not_found(_: Request, _: Params) -> anyhow::Result<Response> {
+    Ok(not_found())
+}
+
+fn serve_upload_page(req: Request, _: Params) -> anyhow::Result<Response> {
+    if !auth::check_basic_auth(&req)? {
+                return Ok(Response::builder()
+                    .status(401)
+                    .header("WWW-Authenticate", "Basic realm=\"Image Upload\"")
+                    .body(Bytes::from("Unauthorized"))
+                    .build());
+            }
     Ok(Response::builder()
         .status(200)
         .header("content-type", "text/html")
@@ -73,7 +45,10 @@ fn serve_upload_page() -> anyhow::Result<Response> {
         .build())
 }
 
-fn upload_image(req: Request, conn: Connection) -> anyhow::Result<Response> {
+fn upload_image(req: Request, _: Params) -> anyhow::Result<Response> {
+    let conn = Connection::open_default()?;
+    db::init(&conn)?;
+
     let boundary = req.header("content-type")
         .and_then(|v| v.as_str())
         .and_then(|v| v.split("boundary=").nth(1))
@@ -127,7 +102,15 @@ fn upload_image(req: Request, conn: Connection) -> anyhow::Result<Response> {
         .build())
 }
 
-fn get_image(id: &str, conn: Connection) -> anyhow::Result<Response> {
+fn get_image(_: Request, params: Params) -> anyhow::Result<Response> {
+    let conn = Connection::open_default()?;
+    db::init(&conn)?;
+
+    let id = match params.get("id") {
+        Some(v) => v,
+        None => return Ok(not_found()),
+    };
+
     if let Some((image, mime_type, hash)) = db::get_image_data(&conn, id)? {
         Ok(Response::builder()
             .status(200)
@@ -143,7 +126,23 @@ fn get_image(id: &str, conn: Connection) -> anyhow::Result<Response> {
     }
 }
 
-fn delete_image(id: &str, conn: Connection) -> anyhow::Result<Response> {
+fn delete_image(req: Request, params: Params) -> anyhow::Result<Response> {
+    let conn = Connection::open_default()?;
+    db::init(&conn)?;
+    
+    // Delete an image by id - requires Basic auth (same protection as upload UI)
+    if !auth::check_basic_auth(&req)? {
+        return Ok(Response::builder()
+            .status(401)
+            .header("WWW-Authenticate", "Basic realm=\"Image Upload\"")
+            .body(Bytes::from("Unauthorized"))
+            .build());
+    }
+    let id = match params.get("id") {
+        Some(v) => v,
+        None => return Ok(not_found()),
+    };
+
     if db::delete_image(&conn, id)? {
         Ok(Response::builder()
             .status(204)
@@ -157,7 +156,15 @@ fn delete_image(id: &str, conn: Connection) -> anyhow::Result<Response> {
     }
 }
 
-fn get_image_metadata(id: &str, conn: Connection) -> anyhow::Result<Response> {
+fn get_image_metadata(_: Request, params: Params) -> anyhow::Result<Response> {
+    let conn = Connection::open_default()?;
+    db::init(&conn)?;
+    
+    let id = match params.get("id") {
+        Some(v) => v,
+        None => return Ok(not_found()),
+    };
+
     if let Some(metadata) = db::get_image_metadata(&conn, id)? {
         let body = serde_json::to_string(&metadata)?;
         Ok(Response::builder()
@@ -173,7 +180,10 @@ fn get_image_metadata(id: &str, conn: Connection) -> anyhow::Result<Response> {
     }
 }
 
-fn get_next_image(conn: Connection) -> anyhow::Result<Response> {
+fn get_next_image(_: Request, _: Params) -> anyhow::Result<Response> {
+    let conn = Connection::open_default()?;
+    db::init(&conn)?;
+
     if let Some(metadata) = db::get_random_image(&conn)? {
         let body = serde_json::to_string(&metadata)?;
         Ok(Response::builder()
