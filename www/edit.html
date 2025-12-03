@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Image</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <main>
+        <h1>Edit Image</h1>
+        <form id="editForm">
+            <div class="form-group">
+                <label for="preview">Current Image</label>
+                <img id="preview" alt="Image preview" style="width:100%; max-height:320px; object-fit:cover; border-radius:8px;"/>
+            </div>
+            <div class="form-group">
+                <label for="imageInput">Replace Image (optional)</label>
+                <input type="file" id="imageInput" name="image" accept="image/*">
+            </div>
+            <div class="form-group">
+                <label for="nameInput">Name</label>
+                <input type="text" id="nameInput" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="descInput">Description</label>
+                <textarea id="descInput" name="description" required></textarea>
+            </div>
+            <button type="submit">Save</button>
+        </form>
+        <div id="error" class="error" hidden role="alert"></div>
+    </main>
+    <script>
+        async function loadMetadata(id) {
+            try {
+                const res = await fetch('/api/meta/' + id);
+                if (!res.ok) throw new Error('Could not load metadata');
+                const data = await res.json();
+                document.getElementById('nameInput').value = data.name || '';
+                document.getElementById('descInput').value = data.description || '';
+                document.getElementById('preview').src = data.url;
+            } catch (err) {
+                showError(err.message);
+            }
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('error');
+            el.textContent = msg;
+            el.hidden = false;
+        }
+
+        (function () {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            if (!id) {
+                showError('Missing id parameter');
+                return;
+            }
+
+            loadMetadata(id);
+
+            const form = document.getElementById('editForm');
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const imageInput = document.getElementById('imageInput');
+                const file = imageInput.files[0];
+
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Saving...';
+
+                try {
+                    const formData = new FormData();
+                    if (file) formData.append('image', file);
+                    formData.append('name', document.getElementById('nameInput').value);
+                    formData.append('description', document.getElementById('descInput').value);
+
+                    const response = await fetch('/api/image/' + id, {
+                        method: 'PUT',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        window.location.href = '/?id=' + id;
+                    } else if (response.status === 401) {
+                        showError('Unauthorized. Check credentials and try again.');
+                    } else {
+                        const text = await response.text();
+                        showError('Save failed: ' + text);
+                    }
+                } catch (err) {
+                    showError('Error: ' + err.message);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Save';
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

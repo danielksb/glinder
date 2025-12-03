@@ -102,6 +102,50 @@ pub fn delete_image(conn: &Connection, id: &str) -> Result<bool> {
     Ok(true)
 }
 
+pub fn update_image(
+    conn: &Connection,
+    id: &str,
+    image_data: Option<&[u8]>,
+    mime_type: Option<&str>,
+    hash: Option<&str>,
+    name: &str,
+    description: &str,
+) -> Result<bool> {
+    // Check exists
+    let result = conn.execute(
+        "SELECT id FROM images WHERE id = ?",
+        &[Value::Text(id.to_string())],
+    )?;
+    if result.rows().next().is_none() {
+        return Ok(false);
+    }
+
+    if let Some(data) = image_data {
+        conn.execute(
+            "UPDATE images SET image = ?, mime_type = ?, hash = ?, name = ?, description = ? WHERE id = ?",
+            &[
+                Value::Blob(data.to_vec()),
+                Value::Text(mime_type.unwrap_or("application/octet-stream").to_string()),
+                Value::Text(hash.unwrap_or("").to_string()),
+                Value::Text(name.to_string()),
+                Value::Text(description.to_string()),
+                Value::Text(id.to_string()),
+            ],
+        )?;
+    } else {
+        conn.execute(
+            "UPDATE images SET name = ?, description = ? WHERE id = ?",
+            &[
+                Value::Text(name.to_string()),
+                Value::Text(description.to_string()),
+                Value::Text(id.to_string()),
+            ],
+        )?;
+    }
+
+    Ok(true)
+}
+
 fn row_to_metadata(result: spin_sdk::sqlite::QueryResult) -> Result<Option<ImageMetadata>> {
     let mut rows = result.rows();
     if let Some(row) = rows.next() {
