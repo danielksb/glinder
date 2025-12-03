@@ -80,6 +80,24 @@ pub fn get_image_metadata(conn: &Connection, id: &str) -> Result<Option<ImageMet
     row_to_metadata(result)
 }
 
+pub fn get_all_images(conn: &Connection) -> Result<Vec<ImageMetadata>> {
+    let result = conn.execute(
+        "SELECT id, name, description FROM images ORDER BY name",
+        &[],
+    )?;
+
+    let mut rows = result.rows();
+    let mut vec = Vec::new();
+    while let Some(row) = rows.next() {
+        let id = row.get::<&str>("id").context("getting id")?.to_string();
+        let name = row.get::<&str>("name").unwrap_or("Unknown").to_string();
+        let description = row.get::<&str>("description").unwrap_or("No description").to_string();
+        let url = format!("/api/image/{}", id);
+        vec.push(ImageMetadata { id, url, name, description });
+    }
+    Ok(vec)
+}
+
 pub fn delete_image(conn: &Connection, id: &str) -> Result<bool> {
     // Check if the image exists first
     let result = conn.execute(

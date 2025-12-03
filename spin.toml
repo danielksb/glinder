@@ -18,6 +18,14 @@ component = "image-upload"
 route = "/upload.html"
 component = "image-upload"
 
+[[trigger.http]]
+route = "/admin.html"
+component = "image-upload"
+
+[[trigger.http]]
+route = "/edit.html"
+component = "image-upload"
+
 [component.image-upload]
 source = "target/wasm32-wasip1/release/image_upload.wasm"
 allowed_outbound_hosts = []

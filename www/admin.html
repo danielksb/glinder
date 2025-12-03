@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin — Glinder</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <main>
+        <header style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+            <h1>Admin</h1>
+            <div>
+                <a href="/upload.html" class="btn">Add new glove</a>
+            </div>
+        </header>
+
+        <section>
+            <div id="error" class="error" hidden role="alert"></div>
+            <div id="list">
+                <p>Loading...</p>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        async function loadList() {
+            try {
+                const res = await fetch('/api/images');
+                if (!res.ok) throw new Error('Failed to load images');
+                const list = await res.json();
+                const container = document.getElementById('list');
+                if (!list.length) {
+                    container.innerHTML = '<p>No gloves found.</p>';
+                    return;
+                }
+                const ul = document.createElement('ul');
+                ul.style.listStyle = 'none';
+                ul.style.padding = '0';
+                ul.style.margin = '0';
+                ul.style.display = 'grid';
+                ul.style.rowGap = '8px';
+                for (const item of list) {
+                    const li = document.createElement('li');
+                    li.style.padding = '10px';
+                    li.style.borderRadius = '8px';
+                    li.style.border = '1px solid #eee';
+                    const a = document.createElement('a');
+                    a.href = '/edit.html?id=' + encodeURIComponent(item.id);
+                    a.textContent = item.name || item.id;
+                    a.style.textDecoration = 'none';
+                    a.style.color = '#0066cc';
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                }
+                container.innerHTML = '';
+                container.appendChild(ul);
+            } catch (err) {
+                showError(err.message);
+            }
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('error');
+            el.textContent = msg;
+            el.hidden = false;
+        }
+
+        (function () {
+            loadList();
+        })();
+    </script>
+</body>
+</html>
