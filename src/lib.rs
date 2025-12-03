@@ -21,9 +21,6 @@ fn handle_request(req: Request) -> Response {
     router.get("/api/image/:id", get_image);
     router.get("/api/meta/:id", get_image_metadata);
     router.get("/api/images", list_images);
-    router.get("/upload.html", serve_upload_page);
-    router.get("/admin.html", serve_admin_page);
-    router.get("/edit.html", serve_edit_page);
     router.put("/api/image/:id", update_image);
     router.get("/api/next", get_next_image);
     router.any("/*", handle_not_found);
@@ -32,51 +29,6 @@ fn handle_request(req: Request) -> Response {
 
 fn handle_not_found(_: Request, _: Params) -> anyhow::Result<Response> {
     Ok(not_found())
-}
-
-fn serve_upload_page(req: Request, _: Params) -> anyhow::Result<Response> {
-    if !auth::check_basic_auth(&req)? {
-                return Ok(Response::builder()
-                    .status(401)
-                    .header("WWW-Authenticate", "Basic realm=\"Image Upload\"")
-                    .body(Bytes::from("Unauthorized"))
-                    .build());
-            }
-    Ok(Response::builder()
-        .status(200)
-        .header("content-type", "text/html")
-        .body(Bytes::from(include_str!("../www/upload.html")))
-        .build())
-}
-
-fn serve_edit_page(req: Request, _: Params) -> anyhow::Result<Response> {
-    if !auth::check_basic_auth(&req)? {
-        return Ok(Response::builder()
-            .status(401)
-            .header("WWW-Authenticate", "Basic realm=\"Image Upload\"")
-            .body(Bytes::from("Unauthorized"))
-            .build());
-    }
-    Ok(Response::builder()
-        .status(200)
-        .header("content-type", "text/html")
-        .body(Bytes::from(include_str!("../www/edit.html")))
-        .build())
-}
-
-fn serve_admin_page(req: Request, _: Params) -> anyhow::Result<Response> {
-    if !auth::check_basic_auth(&req)? {
-        return Ok(Response::builder()
-            .status(401)
-            .header("WWW-Authenticate", "Basic realm=\"Image Upload\"")
-            .body(Bytes::from("Unauthorized"))
-            .build());
-    }
-    Ok(Response::builder()
-        .status(200)
-        .header("content-type", "text/html")
-        .body(Bytes::from(include_str!("../www/admin.html")))
-        .build())
 }
 
 fn list_images(req: Request, _: Params) -> anyhow::Result<Response> {
@@ -104,6 +56,14 @@ fn list_images(req: Request, _: Params) -> anyhow::Result<Response> {
 fn upload_image(req: Request, _: Params) -> anyhow::Result<Response> {
     let conn = Connection::open_default()?;
     db::init(&conn)?;
+
+    if !auth::check_basic_auth(&req)? {
+        return Ok(Response::builder()
+            .status(401)
+            .header("WWW-Authenticate", "Basic realm=\"Image Upload\"")
+            .body(Bytes::from("Unauthorized"))
+            .build());
+    }
 
     let boundary = req.header("content-type")
         .and_then(|v| v.as_str())
