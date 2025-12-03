@@ -26,7 +26,10 @@
                 <label for="descInput">Description</label>
                 <textarea id="descInput" name="description" required></textarea>
             </div>
-            <button type="submit">Save</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button type="submit">Save</button>
+                <button id="deleteBtn" type="button" class="btn btn-delete">Delete</button>
+            </div>
         </form>
         <div id="error" class="error" hidden role="alert"></div>
     </main>
@@ -94,6 +97,35 @@
                 } finally {
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Save';
+                }
+            });
+
+            const deleteBtn = document.getElementById('deleteBtn');
+            deleteBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                if (!confirm('Are you sure you want to delete this glove? This cannot be undone.')) return;
+                deleteBtn.disabled = true;
+                const oldText = deleteBtn.textContent;
+                deleteBtn.textContent = 'Deleting...';
+                try {
+                    const response = await fetch('/api/image/' + id, { method: 'DELETE' });
+                    if (response.ok || response.status === 204) {
+                        window.location.href = '/admin.html';
+                        return;
+                    }
+                    if (response.status === 401) {
+                        showError('Unauthorized. Check credentials and try again.');
+                    } else if (response.status === 404) {
+                        showError('Not found. The glove might already have been deleted.');
+                    } else {
+                        const text = await response.text();
+                        showError('Delete failed: ' + text);
+                    }
+                } catch (err) {
+                    showError('Error: ' + err.message);
+                } finally {
+                    deleteBtn.disabled = false;
+                    deleteBtn.textContent = oldText;
                 }
             });
         })();

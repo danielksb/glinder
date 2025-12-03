@@ -54,6 +54,12 @@ button:hover {
     background-color: #0052a3;
 }
 
+/* Danger button styling (delete) */
+.btn-delete {
+    background-color: #dc3545;
+}
+.btn-delete:hover { background-color: #bb2d3b; }
+
 button:disabled {
     background-color: #ccc;
     cursor: not-allowed;
