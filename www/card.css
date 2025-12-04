@@ -90,10 +90,13 @@ body {
     padding: 20px;
     flex: 1;
     overflow-y: auto;
-    /* Add bottom padding so a fixed controls bar doesn't overlap the visible text */
-    /* Keep enough room for the buttons + a comfortable gap; respect safe-area for mobile devices */
-    padding-bottom: calc(20px + 64px + 20px + env(safe-area-inset-bottom, 0px));
+    /* Reduce bottom padding since controls are inline in the content */
+    padding-bottom: 20px;
 }
+
+/* Removed in-card actions; use actionBar instead */
+
+/* Inline in-card controls are no longer used; a single actionBar at the bottom of the card is shown */
 
 .card-title {
     font-size: 24px;
@@ -110,17 +113,14 @@ body {
 }
 
 .controls {
-    /* Keep the action buttons visible on small screens by fixing them to the viewport */
-    position: fixed;
-    bottom: 18px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 200; /* on top of the card */
-    width: min(420px, calc(100% - 32px));
+    /* Inline action buttons that appear directly beneath the name and/or description.
+       They are not fixed/absolute so they flow with the card content. */
+    position: static;
     display: flex;
     justify-content: center;
     gap: 20px;
-    pointer-events: auto;
+    width: min(420px, calc(100% - 32px));
+    margin: 64px auto 0 auto;
 }
 
 .btn {
@@ -142,6 +142,8 @@ body {
     transform: scale(1.04);
 }
 
+    .btn.small { width: 48px; height: 48px; font-size: 18px; }
+
 /* Slightly tweak button size on tiny screens so they don't overlap content */
 @media (max-width: 360px) {
     .btn { width: 52px; height: 52px; font-size: 20px; }
@@ -149,6 +151,7 @@ body {
 
 .btn-nope { color: var(--glinder-pink); }
 .btn-like { color: var(--glinder-teal); font-size: 32px;}
+.btn-info { color: var(--glinder-dark); font-weight: 700; }
 
 .loading {
     display: flex;
