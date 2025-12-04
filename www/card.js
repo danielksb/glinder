@@ -59,8 +59,8 @@ function updateCard(data, replace = false) {
             <div class="card-text" id="cardText" style="display:none"></div>
             <div id="actionBar" class="controls action-bar" role="toolbar" aria-label="Actions">
                 <button class="btn btn-nope" data-action="nope">✖</button>
-                <button class="btn btn-info" aria-expanded="false">ℹ️</button>
-                <button class="btn btn-like" data-action="like">♥</button>
+                <button class="btn btn-info" aria-expanded="false">🛈</button>
+                <button class="btn btn-like" data-action="like">❤</button>
             </div>
         </div>
     `;

@@ -151,7 +151,7 @@ body {
 
 .btn-nope { color: var(--glinder-pink); }
 .btn-like { color: var(--glinder-teal); font-size: 32px;}
-.btn-info { color: var(--glinder-dark); font-weight: 700; }
+.btn-info { color: var(--glinder-dark); }
 
 .loading {
     display: flex;
