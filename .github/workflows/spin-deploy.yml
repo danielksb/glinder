@@ -1,0 +1,47 @@
+name: Build & Deploy with Spin
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    # Use the official Rust container to match your rust toolchain during builds
+    container:
+      image: rust:1.87
+
+    env:
+      # Export variables for Spin deploy; these should be set in the GitHub repository or organization variables
+      SPIN_VARIABLE_USERNAME: "${{ secrets.username }}"
+      SPIN_VARIABLE_PASSWORD: "${{ secrets.password }}"
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Install wasm32 target
+      run: |
+        rustup target add wasm32-wasip1
+
+    - name: Install Spin CLI
+      run: |
+        curl -fsSL https://spinframework.dev/downloads/install.sh | bash -s -- -v v3.1.2
+        echo "$HOME/.spin/bin" >> $GITHUB_PATH
+      shell: bash
+
+    - name: Verify installation
+      run: |
+        spin --version
+        cargo --version
+
+    - name: Build using Spin
+      run: |
+        spin build
+
+    - name: Deploy using Spin
+      run: |
+        spin deploy
