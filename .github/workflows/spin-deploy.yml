@@ -30,18 +30,17 @@ jobs:
     - name: Install Spin CLI
       run: |
         curl -fsSL https://spinframework.dev/downloads/install.sh | bash -s -- -v v3.1.2
-        echo "$HOME/.spin/bin" >> $GITHUB_PATH
       shell: bash
 
     - name: Verify installation
       run: |
-        spin --version
+        ./spin --version
         cargo --version
 
     - name: Build using Spin
       run: |
-        spin build
+        ./spin build
 
     - name: Deploy using Spin
       run: |
-        spin deploy
+        ./spin deploy
