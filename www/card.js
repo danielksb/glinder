@@ -55,11 +55,10 @@ function updateCard(data, replace = false) {
         <img class="card-image" alt="Profile Picture" draggable="false">
         <div class="card-content">
             <div class="card-title"></div>
-            <!-- Descriptions are toggled with the info button; actionBar sits below the title and below the description when shown -->
-            <div class="card-text" id="cardText" style="display:none"></div>
+            <!-- Always show the description text; actionBar sits below the description -->
+            <div class="card-text" id="cardText"></div>
             <div id="actionBar" class="controls action-bar" role="toolbar" aria-label="Actions">
                 <button class="btn btn-nope" data-action="nope">✖</button>
-                <button class="btn btn-info" aria-expanded="false">🛈</button>
                 <button class="btn btn-like" data-action="like">❤</button>
             </div>
         </div>
@@ -77,43 +76,13 @@ function updateCard(data, replace = false) {
     if (titleEl) titleEl.textContent = data.name || '';
     if (textEl) textEl.textContent = data.description || '';
 
-    // Default: hide text
-    if (textEl) textEl.style.display = 'none';
-    // Toggle the description visible/hidden above the single actionBar
-    function showDescription() {
-        if (textEl) textEl.style.display = '';
-        // Ensure enough scrollable area so the bottom of the text isn't overlapped by the action bar
-        const c = card.querySelector('.card-content');
-        if (c) c.scrollTop = 0; // keep at top - user can scroll to see the bottom
-        // Update the accessibility attribute on the info button
-        if (actionBar) {
-            const actionInfo = actionBar.querySelector('.btn-info');
-            if (actionInfo) actionInfo.setAttribute('aria-expanded', 'true');
-        }
-    }
-
-    function hideDescription() {
-        if (textEl) textEl.style.display = 'none';
-        if (actionBar) {
-            const actionInfo = actionBar.querySelector('.btn-info');
-            if (actionInfo) actionInfo.setAttribute('aria-expanded', 'false');
-        }
-    }
+    // Always show the description text
+    if (textEl) textEl.style.display = '';
 
     // Wire actionBar buttons (if present) to same handlers — replace onclick each render
     if (actionBar) {
-        const actionInfo = actionBar.querySelector('.btn-info');
         const actionLike = actionBar.querySelector('.btn-like');
         const actionNope = actionBar.querySelector('.btn-nope');
-        if (actionInfo) {
-            // Use event listeners so we can stop propagation on touch events
-            actionInfo.addEventListener('click', (ev) => { ev.stopPropagation(); if (textEl && textEl.style.display === 'none') showDescription(); else hideDescription(); });
-            actionInfo.addEventListener('touchstart', (ev) => { ev.stopPropagation(); });
-            actionInfo.addEventListener('touchend', (ev) => { ev.stopPropagation(); });
-            // Reset aria state for new card and connect to the card text
-            actionInfo.setAttribute('aria-expanded', 'false');
-            actionInfo.setAttribute('aria-controls', 'cardText');
-        }
         if (actionLike) {
             actionLike.addEventListener('click', (ev) => { ev.stopPropagation(); swipe('right'); });
             actionLike.addEventListener('touchstart', (ev) => { ev.stopPropagation(); });
