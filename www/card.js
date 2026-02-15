@@ -52,8 +52,8 @@ function updateCard(data, replace = false) {
     // Build safe DOM nodes instead of injecting raw HTML to avoid XSS
     // Include the action bar markup inside the card so it remains part of the card DOM
     card.innerHTML = `
-        <img class="card-image" alt="Profile Picture" draggable="false">
         <div class="card-content">
+            <img class="card-image" alt="Profile Picture" draggable="false">
             <div class="card-title"></div>
             <!-- Always show the description text; actionBar sits below the description -->
             <div class="card-text" id="cardText"></div>
