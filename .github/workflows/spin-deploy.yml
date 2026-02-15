@@ -29,7 +29,7 @@ jobs:
 
     - name: Install Spin CLI
       run: |
-        curl -fsSL https://spinframework.dev/downloads/install.sh | bash -s -- -v v3.1.2
+        curl -fsSL https://spinframework.dev/downloads/install.sh | bash -s -- -v v3.6.0
       shell: bash
 
     - name: Verify installation
