@@ -136,23 +136,50 @@ card.addEventListener('touchstart', (e) => {
         // ignore errors and fall back to default behavior
     }
     startX = e.touches[0].clientX;
-    isDragging = true;
-    card.style.transition = 'none';
+    startY = e.touches[0].clientY;
+    currentX = startX;
+    // Don't mark as dragging yet — wait until horizontal movement clearly dominates vertical
+    isDragging = false;
 });
 
 card.addEventListener('touchmove', (e) => {
-    if (!isDragging) return;
-    currentX = e.touches[0].clientX;
-    const diffX = currentX - startX;
-    const rotation = diffX / 20;
-    card.style.transform = `translate(${diffX}px, 0) rotate(${rotation}deg)`;
+    if (e.touches.length > 1) return; // ignore multi-touch
+    const touch = e.touches[0];
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+
+    // If dragging hasn't started, only start when horizontal movement is dominant
+    if (!isDragging) {
+        const absDx = Math.abs(dx);
+        const absDy = Math.abs(dy);
+        const HORIZONTAL_THRESHOLD = 12; // px
+        const HORIZONTAL_DOMINANCE = 1.5; // horizontal must be this times larger than vertical
+
+        if (absDx > HORIZONTAL_THRESHOLD && absDx > absDy * HORIZONTAL_DOMINANCE) {
+            isDragging = true;
+            card.style.transition = 'none';
+        } else {
+            // Let browser handle vertical scrolling
+            return;
+        }
+    }
+
+    // Actively dragging horizontally
+    currentX = touch.clientX;
+    const rawDiffX = currentX - startX;
+    const dampedX = rawDiffX * 0.6; // dampen horizontal movement for less sensitivity
+    const rotation = dampedX / 25; // gentler rotation
+    card.style.transform = `translate(${dampedX}px, 0) rotate(${rotation}deg)`;
     // Keep the fixed action bar static while dragging the card; do not translate it
 });
 
 card.addEventListener('touchend', (e) => {
+    // If we never started a horizontal drag, this was a scroll/tap — nothing to do
+    if (!isDragging) return;
+
     isDragging = false;
     const diffX = currentX - startX;
-    const threshold = 100;
+    const threshold = Math.max(120, window.innerWidth * 0.18); // require a larger deliberate swipe
 
     if (Math.abs(diffX) > threshold) {
         swipe(diffX > 0 ? 'right' : 'left');
