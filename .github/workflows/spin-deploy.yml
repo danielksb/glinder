@@ -43,4 +43,5 @@ jobs:
 
     - name: Deploy using Spin
       run: |
-        ./spin deploy
+        ./spin login --auth-method=token --token="${{ secrets.SPIN_API_TOKEN }}"
+        ./spin cloud deploy
